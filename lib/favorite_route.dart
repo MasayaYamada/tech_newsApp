@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:technewsapp/saved_newsdata.dart';
+import 'dbhealper.dart';
 
 class Favorite extends StatefulWidget {
 
@@ -9,51 +10,53 @@ class Favorite extends StatefulWidget {
 
 class _Favorite extends State<Favorite> {
 
-  Future<String> url;
-  Future<String> title;
-  Future<String> urlToImage;
+  List<SavedNews> savedNews = [];
+
+  final dbHelper = DatabaseHelper.instance;
 
   @override
   Widget build(BuildContext context) {
-    url = _getURL();
-    title = _getTitle();
-    urlToImage = _getUrlToImage();
-    print('url is $url');
-    print('title is $title');
-    print('urlToImage is $urlToImage');
-
+    _queryAll();
     return Scaffold(
       appBar: AppBar(
         title: Text("Favorite"),
       ),
-      body: Center(
-          child: Text("ホゲホゲ"),
-      ),
+      body: Container(
+        child: ListView.builder(
+          padding: const EdgeInsets.all(8),
+          itemCount: savedNews.length + 1,
+          itemBuilder: (BuildContext context, int index) {
+            if (index == savedNews.length) {
+              return RaisedButton(
+                child: Text('Refresh'),
+                onPressed: () {
+                  setState(() {
+                    _queryAll();
+                  });
+                },
+              );
+            }
+            return Container(
+              height: 40,
+              child: Center(
+                child: Text(
+                  '[${savedNews[index].title}]',
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+            );
+          },
+        ),
+    ),
     );
   }
 
-  Future<String> _getURL() async {
-      String url;
-      final prefs = await SharedPreferences.getInstance();
-      url = (prefs.getString('url') ?? null);
-      print('url is $url');
-      return url;
-    }
-
-  Future<String> _getTitle() async {
-     String title;
-     final prefs = await SharedPreferences.getInstance();
-     title = (prefs.getString('title') ?? null);
-     print('title is $title');
-     return title;
-    }
-
-  Future<String> _getUrlToImage() async {
-     String urlToImage;
-     final prefs = await SharedPreferences.getInstance();
-     urlToImage = (prefs.getString('urlToString') ?? null);
-     print('urlToImage is $urlToImage');
-     return urlToImage;
-    }
+  void _queryAll() async {
+    final allRows = await dbHelper.queryAllRows();
+//    savedNews.clear();
+    allRows.forEach((row) => savedNews.add(SavedNews.fromMap(row)));
+    print('Query done.');
+    setState(() {});
+  }
 
 }

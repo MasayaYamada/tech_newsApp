@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:technewsapp/saved_newsdata.dart';
 import 'fetch_newsdata.dart';
 import 'webview_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dbhealper.dart';
+import 'package:uuid/uuid.dart';
 
 class Home extends StatefulWidget {
 
@@ -16,7 +19,9 @@ class _Home extends State<Home> {
 
   int _selectedIndex = 0;
   List<bool> _isFavorite = List.generate(20, (i)=>false);
-  List<NewsFavorite> _savedFavorite = new List<NewsFavorite>();
+
+  final dbHelper = DatabaseHelper.instance;
+  List<SavedNews> savedNews = [];
 
   // Animation controller init method
   @override
@@ -94,10 +99,9 @@ class _Home extends State<Home> {
             setState(() {
               if(_isFavorite[position] == false) {
                 _isFavorite[position] = true;
-                saveNewsData(title, url, urlToImage);
+                _insert(title, url, urlToImage);
               } else {
                 _isFavorite[position] = false;
-                removeNewsData(title, url, urlToImage);
               }
             });
           },
@@ -105,20 +109,20 @@ class _Home extends State<Home> {
     );
   }
 
-  void saveNewsData(String title, String url, String urlToImage) async{
-      final prefs = await SharedPreferences.getInstance();
-      prefs.setString('title', title);
-      prefs.setString('url', url);
-      prefs.setString('urlToImage', urlToImage);
-  }
+  void _insert(title, url, urlToImage) async {
 
-  void removeNewsData(String title, String url, String urlToImage) async{
-    final prefs = await SharedPreferences.getInstance();
-    prefs.remove('title');
-    prefs.remove('url');
-    prefs.remove('urlToImage');
-  }
+    var uuid = Uuid();
 
+    // row to insert
+    Map<String, dynamic> row = {
+      DatabaseHelper.columnId: uuid,
+      DatabaseHelper.columnTitle: title,
+      DatabaseHelper.columnUrl: url,
+      DatabaseHelper.columnUrlToImage: urlToImage
+    };
+    SavedNews savedNews = SavedNews.fromMap(row);
+    await dbHelper.insert(savedNews);
+  }
 
   void _onItemTapped(int index) {
     setState(() {

@@ -19,15 +19,6 @@ class NewsDataList {
   }
 }
 
-class NewsFavorite {
-
-  final String title;
-  final String url;
-  final String urlToImage;
-
-  NewsFavorite({this.title, this.url, this.urlToImage});
-
-}
 
 Future<List<NewsDataList>> fetchNewsData() async {
 
@@ -47,3 +38,4 @@ Future<List<NewsDataList>> fetchNewsData() async {
     throw Exception('Failed to load album');
   }
 }
+

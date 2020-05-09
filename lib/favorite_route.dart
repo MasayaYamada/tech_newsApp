@@ -4,15 +4,12 @@ import 'package:technewsapp/dbhealper.dart';
 import 'webview_screen.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-
 class Favorite extends StatefulWidget {
-
   @override
   _Favorite createState() => _Favorite();
 }
 
 class _Favorite extends State<Favorite> {
-
   List<SavedNews> savedNews = [];
 
   final dbHelper = DatabaseHelper.instance;
@@ -31,50 +28,8 @@ class _Favorite extends State<Favorite> {
         title: Text("Favorite"),
       ),
       body: Container(
-        child: ListView.builder(
-          padding: const EdgeInsets.all(2.0),
-          itemCount: savedNews.length,
-          itemBuilder: (BuildContext context, int index) {
-            if (savedNews.length == 0){
-              return Center(child: Text('データがありません'));
-            } else if (index == savedNews.length) {
-              setState(() {
-                _queryAll();
-              });
-            }
-            return Card(
-              child: ListTile(
-                 title: Text(
-                  '${savedNews[index].title}',
-                  style: TextStyle(
-                      fontSize: 18.0,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold),
-                ),
-                leading: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SizedBox(
-                    child: savedNews[index].urlToImage == null
-                        ? Image(
-                      image: AssetImage('assets/image/noImage.png'),
-                    )
-                        : Image.network('${savedNews[index].urlToImage}'),
-                    height: 100.0,
-                    width: 100.0,
-                  ),
-                ),
-                onTap: () {
-                  print(savedNews[index].url);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => WebViewScreen(url: savedNews[index].url)),
-                  );
-                },
-              ),
-            );
-          },
-        ),
-    ),
+        child: _ListViewWidget(savedNews: savedNews),
+      ),
     );
   }
 
@@ -84,5 +39,87 @@ class _Favorite extends State<Favorite> {
     print('Query done.');
     setState(() {});
   }
+}
 
+class _ListViewWidget extends StatelessWidget {
+  const _ListViewWidget({
+    Key key,
+    @required this.savedNews,
+  }) : super(key: key);
+
+  final List<SavedNews> savedNews;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(2.0),
+      itemCount: savedNews.length,
+      itemBuilder: (BuildContext context, int index) {
+        if (savedNews.length == 0) {
+          return Center(child: Text('データがありません'));
+        }
+        return CardListItems(savedNews: savedNews, index: index);
+      },
+    );
+  }
+}
+
+class CardListItems extends StatelessWidget {
+  final int index;
+
+  const CardListItems({
+    Key key,
+    @required this.savedNews,
+    @required this.index,
+  }) : super(key: key);
+
+  final List<SavedNews> savedNews;
+
+  @override
+  Widget build(BuildContext context) {
+    return Slidable(
+      actionPane: SlidableDrawerActionPane(),
+      actionExtentRatio: 0.25,
+      child: Card(
+        child: ListTile(
+          title: Text(
+            '${savedNews[index].title}',
+            style: TextStyle(
+                fontSize: 18.0,
+                color: Colors.black,
+                fontWeight: FontWeight.bold),
+          ),
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SizedBox(
+              child: savedNews[index].urlToImage == null
+                  ? Image(
+                      image: AssetImage('assets/image/noImage.png'),
+                    )
+                  : Image.network('${savedNews[index].urlToImage}'),
+              height: 100.0,
+              width: 100.0,
+            ),
+          ),
+          onTap: () {
+            print(savedNews[index].url);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      WebViewScreen(url: savedNews[index].url)),
+            );
+          },
+        ),
+      ),
+      secondaryActions: <Widget>[
+        IconSlideAction(
+          caption: 'Delete',
+          color: Colors.red,
+          icon: Icons.delete,
+          onTap: () {},
+        ),
+      ],
+    );
+  }
 }

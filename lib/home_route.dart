@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:technewsapp/saved_newsdata.dart';
 import 'fetch_newsdata.dart';
 import 'webview_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dbhealper.dart';
 import 'package:uuid/uuid.dart';
 
@@ -87,8 +86,8 @@ class _Home extends State<Home> {
   }
 
   IconButton _favoriteIconButton( BuildContext context, int position, String title, String url, String urlToImage, {IconData iconData}){
-    print('_isFavorite on favoButton function is $_isFavorite');
-    print('position is $position');
+//    print('_isFavorite on favoButton function is $_isFavorite');
+//    print('position is $position');
     return(
         IconButton(
           icon: Icon(
@@ -111,7 +110,7 @@ class _Home extends State<Home> {
 
   void _insert(title, url, urlToImage) async {
 
-    var uuid = Uuid();
+    var uuid = Uuid().v1();
 
     // row to insert
     Map<String, dynamic> row = {
@@ -121,7 +120,8 @@ class _Home extends State<Home> {
       DatabaseHelper.columnUrlToImage: urlToImage
     };
     SavedNews savedNews = SavedNews.fromMap(row);
-    await dbHelper.insert(savedNews);
+    final id = await dbHelper.insert(savedNews);
+    print("insert data is $id");
   }
 
   void _onItemTapped(int index) {

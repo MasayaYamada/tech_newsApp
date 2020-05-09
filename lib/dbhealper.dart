@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:sqflite/sqlite_api.dart';
 import 'package:technewsapp/saved_newsdata.dart';
 
 class DatabaseHelper {
@@ -41,7 +39,7 @@ class DatabaseHelper {
   Future _onCreate(Database db, int version) async {
     await db.execute('''
           CREATE TABLE $table (
-            $columnId TEXT PRIMARY KEY AUTOINCREMENT,
+            $columnId TEXT NOT NULL PRIMARY KEY,
             $columnTitle TEXT NOT NULL,
             $columnUrl TEXT NOT NULL,
             $columnUrlToImage TEXT NOT NULL
@@ -56,7 +54,7 @@ class DatabaseHelper {
   // inserted row.
   Future<int> insert(SavedNews savedNews) async {
     Database db = await instance.database;
-    return await db.insert(table, {'title': savedNews.title, 'url': savedNews.url, 'urlToImage': savedNews.urlToImage});
+    return await db.insert(table, {'id': savedNews.id, 'title': savedNews.title, 'url': savedNews.url, 'urlToImage': savedNews.urlToImage});
   }
 
   // All of the rows are returned as a list of maps, where each map is

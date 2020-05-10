@@ -4,15 +4,16 @@ import 'package:technewsapp/dbhealper.dart';
 import 'webview_screen.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
+final dbHelper = DatabaseHelper.instance;
+
 class Favorite extends StatefulWidget {
   @override
   _Favorite createState() => _Favorite();
 }
-
 class _Favorite extends State<Favorite> {
-  List<SavedNews> savedNews = [];
 
-  final dbHelper = DatabaseHelper.instance;
+  SlidableController slidableController;
+  List<SavedNews> savedNews = [];
 
   @override
   void initState() {
@@ -20,6 +21,9 @@ class _Favorite extends State<Favorite> {
     super.initState();
     _queryAll();
   }
+
+  Animation<double> _rotationAnimation;
+  Color _fabColor = Colors.blue;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +43,10 @@ class _Favorite extends State<Favorite> {
     print('Query done.');
     setState(() {});
   }
+
+
 }
+
 
 class _ListViewWidget extends StatelessWidget {
   const _ListViewWidget({
@@ -66,6 +73,7 @@ class _ListViewWidget extends StatelessWidget {
 
 class CardListItems extends StatelessWidget {
   final int index;
+  final List<SavedNews> savedNews;
 
   const CardListItems({
     Key key,
@@ -73,13 +81,20 @@ class CardListItems extends StatelessWidget {
     @required this.index,
   }) : super(key: key);
 
-  final List<SavedNews> savedNews;
-
   @override
   Widget build(BuildContext context) {
     return Slidable(
+      key: Key(savedNews[index].id),
       actionPane: SlidableDrawerActionPane(),
       actionExtentRatio: 0.25,
+      dismissal: SlidableDismissal(
+        child: SlidableDrawerDismissal(),
+        onDismissed: (actionType) {
+            savedNews.removeAt(index);
+            // delete from db
+          _delete(savedNews[index].id);
+        },
+      ),
       child: Card(
         child: ListTile(
           title: Text(
@@ -117,9 +132,17 @@ class CardListItems extends StatelessWidget {
           caption: 'Delete',
           color: Colors.red,
           icon: Icons.delete,
-          onTap: () {},
+          onTap: () {
+              _delete(savedNews[index].id);
+          },
         ),
       ],
     );
   }
+
+  void _delete(id) async {
+    // Assuming that the number of rows is the id for the last row.
+    final rowsDeleted = await dbHelper.delete(id);
+  }
+
 }

@@ -31,8 +31,14 @@ class _Favorite extends State<Favorite> {
       appBar: AppBar(
         title: Text("Favorite"),
       ),
-      body: Container(
-        child: _ListViewWidget(savedNews: savedNews),
+      body: Center(
+        child: OrientationBuilder(
+          builder: (context, orientation) => _listViewWidget(
+              context,
+              orientation == Orientation.portrait
+                  ? Axis.vertical
+                  : Axis.horizontal),
+        ),
       ),
     );
   }
@@ -44,34 +50,67 @@ class _Favorite extends State<Favorite> {
     setState(() {});
   }
 
-
-}
-
-
-class _ListViewWidget extends StatelessWidget {
-  const _ListViewWidget({
-    Key key,
-    @required this.savedNews,
-  }) : super(key: key);
-
-  final List<SavedNews> savedNews;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _listViewWidget(BuildContext context, Axis direction) {
     return ListView.builder(
-      padding: const EdgeInsets.all(2.0),
-      itemCount: savedNews.length,
-      itemBuilder: (BuildContext context, int index) {
-        if (savedNews.length == 0) {
-          return Center(child: Text('データがありません'));
-        }
-        return CardListItems(savedNews: savedNews, index: index);
+      scrollDirection: direction,
+      itemCount: savedNews.length == 0 ? 0 : savedNews.length - 1,
+      itemBuilder: (context, index) {
+        final Axis slideDirection = direction == Axis.horizontal ? Axis.vertical : Axis.horizontal;
+        return _getSlideWithLists(context, index, slideDirection);
       },
     );
+  }
+
+  Widget _getSlideWithLists(BuildContext context, int index, Axis direction){
+    return Slidable.builder(
+      key: Key(savedNews[index].id),
+      controller: slidableController,
+      direction: direction,
+
+      dismissal: SlidableDismissal(
+        child: SlidableDrawerDismissal(),
+        onDismissed: (actionType) {
+          setState(() {
+            savedNews.removeAt(index);
+            if (index == 0 ){
+              _delete(savedNews[0].id);
+            } else if(index + 1 == savedNews.length - 1){
+              _delete(savedNews[savedNews.length - 1].id);
+            } else {
+              _delete(savedNews[index].id);
+            }
+          });
+        },
+      ),
+      child: CardListItems(savedNews: savedNews, index: index),
+      secondaryActionDelegate: SlideActionBuilderDelegate(
+          actionCount: 1,
+          builder: (context, index, animation, renderingMode) {
+            return IconSlideAction(
+              caption: 'Delete',
+              color: renderingMode == SlidableRenderingMode.slide
+                  ? Colors.red.withOpacity(animation.value)
+                  : Colors.red,
+              icon: Icons.delete,
+              onTap: ((){
+                setState(() {
+                  savedNews.removeAt(index);
+                  _delete(savedNews[index].id);
+                });
+              }),
+            );
+          }
+      ), actionPane: SlidableScrollActionPane(),
+    );
+  }
+  void _delete(id) async {
+    // Assuming that the number of rows is the id for the last row.
+    final rowsDeleted = await dbHelper.delete(id);
   }
 }
 
 class CardListItems extends StatelessWidget {
+
   final int index;
   final List<SavedNews> savedNews;
 
@@ -83,66 +122,37 @@ class CardListItems extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Slidable(
-      key: Key(savedNews[index].id),
-      actionPane: SlidableDrawerActionPane(),
-      actionExtentRatio: 0.25,
-      dismissal: SlidableDismissal(
-        child: SlidableDrawerDismissal(),
-        onDismissed: (actionType) {
-            savedNews.removeAt(index);
-            // delete from db
-          _delete(savedNews[index].id);
+    return Card(
+      child: ListTile(
+        title: Text(
+          '${savedNews[index].title}',
+          style: TextStyle(
+              fontSize: 18.0,
+              color: Colors.black,
+              fontWeight: FontWeight.bold),
+        ),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SizedBox(
+            child: savedNews[index].urlToImage == null
+                ? Image(
+              image: AssetImage('assets/image/noImage.png'),
+            )
+                : Image.network('${savedNews[index].urlToImage}'),
+            height: 100.0,
+            width: 100.0,
+          ),
+        ),
+        onTap: () {
+          print(savedNews[index].url);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    WebViewScreen(url: savedNews[index].url)),
+          );
         },
       ),
-      child: Card(
-        child: ListTile(
-          title: Text(
-            '${savedNews[index].title}',
-            style: TextStyle(
-                fontSize: 18.0,
-                color: Colors.black,
-                fontWeight: FontWeight.bold),
-          ),
-          leading: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SizedBox(
-              child: savedNews[index].urlToImage == null
-                  ? Image(
-                      image: AssetImage('assets/image/noImage.png'),
-                    )
-                  : Image.network('${savedNews[index].urlToImage}'),
-              height: 100.0,
-              width: 100.0,
-            ),
-          ),
-          onTap: () {
-            print(savedNews[index].url);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      WebViewScreen(url: savedNews[index].url)),
-            );
-          },
-        ),
-      ),
-      secondaryActions: <Widget>[
-        IconSlideAction(
-          caption: 'Delete',
-          color: Colors.red,
-          icon: Icons.delete,
-          onTap: () {
-              _delete(savedNews[index].id);
-          },
-        ),
-      ],
     );
   }
-
-  void _delete(id) async {
-    // Assuming that the number of rows is the id for the last row.
-    final rowsDeleted = await dbHelper.delete(id);
-  }
-
 }

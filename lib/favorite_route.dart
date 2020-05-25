@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:technewsapp/saved_newsdata.dart';
 import 'package:technewsapp/dbhealper.dart';
@@ -31,14 +33,15 @@ class _Favorite extends State<Favorite> {
       appBar: AppBar(
         title: Text("Favorite"),
       ),
-      body: Center(
-        child: OrientationBuilder(
-          builder: (context, orientation) => _listViewWidget(
-              context,
-              orientation == Orientation.portrait
-                  ? Axis.vertical
-                  : Axis.horizontal),
-        ),
+      body: new RefreshIndicator(
+           onRefresh: _onRefresh,
+          child: OrientationBuilder(
+            builder: (context, orientation) => _listViewWidget(
+                context,
+                orientation == Orientation.portrait
+                    ? Axis.vertical
+                    : Axis.horizontal),
+          ),
       ),
     );
   }
@@ -50,10 +53,16 @@ class _Favorite extends State<Favorite> {
     setState(() {});
   }
 
+  Future<void> _onRefresh() async {
+    setState(() {
+      _queryAll();
+    });
+  }
+
   Widget _listViewWidget(BuildContext context, Axis direction) {
     return ListView.builder(
       scrollDirection: direction,
-      itemCount: savedNews.length == 0 ? 0 : savedNews.length - 1,
+      itemCount: savedNews.length,
       itemBuilder: (context, index) {
         final Axis slideDirection = direction == Axis.horizontal ? Axis.vertical : Axis.horizontal;
         return _getSlideWithLists(context, index, slideDirection);
@@ -63,7 +72,7 @@ class _Favorite extends State<Favorite> {
 
   Widget _getSlideWithLists(BuildContext context, int index, Axis direction){
     return Slidable.builder(
-      key: Key(savedNews[index].id),
+      key: Key(savedNews[index].title),
       controller: slidableController,
       direction: direction,
 
@@ -72,13 +81,7 @@ class _Favorite extends State<Favorite> {
         onDismissed: (actionType) {
           setState(() {
             savedNews.removeAt(index);
-            if (index == 0 ){
-              _delete(savedNews[0].id);
-            } else if(index + 1 == savedNews.length - 1){
-              _delete(savedNews[savedNews.length - 1].id);
-            } else {
-              _delete(savedNews[index].id);
-            }
+            _delete(savedNews[index].id);
           });
         },
       ),
@@ -93,10 +96,8 @@ class _Favorite extends State<Favorite> {
                   : Colors.red,
               icon: Icons.delete,
               onTap: ((){
-                setState(() {
                   savedNews.removeAt(index);
                   _delete(savedNews[index].id);
-                });
               }),
             );
           }

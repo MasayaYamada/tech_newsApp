@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
+import 'package:share/share.dart';
 
 class WebViewScreen extends StatefulWidget {
 
@@ -22,6 +23,15 @@ class _WebViewScreen extends State<WebViewScreen> {
   Widget build(BuildContext context) {
     return WebviewScaffold(
       appBar: AppBar(
+          actions: <Widget>[
+      // action button
+         IconButton(
+          icon: Icon(Icons.share),
+          onPressed: () {
+              Share.share(url);
+           },
+         ),
+      ],
       ),
       url: url,
     );
